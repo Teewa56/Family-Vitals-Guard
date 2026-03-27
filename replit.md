@@ -1,8 +1,8 @@
-# Workspace
+# Vitals Overwatch
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+A proactive family health intelligence platform that transitions wellness from reactive crisis management to data-driven prevention. Unifies biometric data from wearables (Apple Watch, Oura, Whoop) into a family dashboard with AI-driven anomaly detection.
 
 ## Stack
 
@@ -14,83 +14,67 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Database**: PostgreSQL + Drizzle ORM
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+- **Build**: esbuild
+- **Frontend**: React + Vite + Tailwind + shadcn/ui
+- **Charts**: Recharts
+- **Animations**: Framer Motion
+- **Routing**: Wouter
 
 ## Structure
 
 ```text
 artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
+├── artifacts/
+│   ├── api-server/         # Express API server
+│   └── vitals-overwatch/   # React frontend (dark health-tech UI)
+├── lib/
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
 │   ├── api-zod/            # Generated Zod schemas from OpenAPI
 │   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+├── scripts/
+│   └── src/seed.ts         # Demo data seeder
 ```
 
-## TypeScript & Composite Projects
+## Key Features
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+- **Family Dashboard** — health cards for all members with HRV, RHR, SpO2 and alert counts
+- **Guardian View** — focused monitoring page for elderly/high-risk members with large metric displays
+- **Member Detail** — 7/14/30-day biometric time-series charts with baseline overlay
+- **Baseline Report** — physician-ready clinical report with anomaly timeline and trends
+- **Alerts Page** — filterable list of all family anomaly events with resolve functionality
+- **AI Anomaly Detection** — z-score based detection comparing readings against 30-day personal baseline
 
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
+## Database Schema
 
-## Root Scripts
+### `family_members`
+- id, name, age, relationship, avatarInitials, wearableSource, isHighRisk, guardianViewEnabled, createdAt
 
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+### `vitals_readings`
+- id, memberId, timestamp, heartRateVariability, restingHeartRate, spo2, sleepScore, recoveryScore, bodyTemperature, respiratoryRate, anomalyScore, anomalyFlags
 
-## Packages
+### `health_alerts`
+- id, memberId, severity (low/medium/high/critical), alertType, title, description, deviationPercent, detectedAt, resolved, resolvedAt
 
-### `artifacts/api-server` (`@workspace/api-server`)
+## API Endpoints
 
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
+All under `/api`:
+- `GET /api/dashboard/overview` — family overview cards + recent alerts
+- `GET /api/family/members` — list all members
+- `POST /api/family/members` — add a member
+- `GET /api/family/members/:id` — single member
+- `GET /api/family/members/:id/vitals?days=7` — vitals history
+- `POST /api/family/members/:id/vitals` — record new reading (auto-computes anomaly)
+- `GET /api/family/members/:id/baseline` — 30-day computed baseline
+- `GET /api/family/members/:id/summary` — health summary with trends
+- `GET /api/alerts` — all alerts (filter: ?memberId= ?resolved=)
+- `POST /api/alerts/:id/resolve` — resolve an alert
+- `GET /api/reports/:memberId?days=30` — generate clinical baseline report
 
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+## Development
 
-### `lib/db` (`@workspace/db`)
-
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
-
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
-
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
-
-### `lib/api-spec` (`@workspace/api-spec`)
-
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
-
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
-
-### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
-
-### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
-
-### `scripts` (`@workspace/scripts`)
-
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+- `pnpm --filter @workspace/vitals-overwatch run dev` — run frontend
+- `pnpm --filter @workspace/api-server run dev` — run API server
+- `pnpm --filter @workspace/db run push` — push schema to DB
+- `pnpm --filter @workspace/scripts run seed` — seed demo data
+- `pnpm --filter @workspace/api-spec run codegen` — regenerate API client

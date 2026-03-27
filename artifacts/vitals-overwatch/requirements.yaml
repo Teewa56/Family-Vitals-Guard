@@ -1,0 +1,13 @@
+packages:
+  "recharts": "For rendering biometric time-series charts (HRV, RHR, SpO2)"
+  "date-fns": "For formatting timestamps and calculating relative times"
+  "framer-motion": "For smooth layout transitions and glowing animations on critical metrics"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility to merge tailwind classes safely"
+  "@workspace/api-client-react": "Workspace package containing generated API hooks"
+
+images: []
+
+notes:
+  - "Assumes @workspace/api-client-react exports the generated React Query hooks."
+  - "The application uses dark mode by default to match the 'professional health tech' aesthetic."

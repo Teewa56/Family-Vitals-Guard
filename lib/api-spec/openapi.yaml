@@ -1,15 +1,23 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Vitals Overwatch API - Family Health Intelligence Platform
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: family
+    description: Family member management
+  - name: vitals
+    description: Biometric vitals data
+  - name: alerts
+    description: Anomaly alerts and events
+  - name: reports
+    description: Baseline report generation
+
 paths:
   /healthz:
     get:
@@ -24,6 +32,231 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /family/members:
+    get:
+      operationId: listFamilyMembers
+      tags: [family]
+      summary: List all family members
+      responses:
+        "200":
+          description: List of family members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FamilyMember"
+    post:
+      operationId: createFamilyMember
+      tags: [family]
+      summary: Add a family member
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFamilyMemberRequest"
+      responses:
+        "201":
+          description: Family member created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FamilyMember"
+
+  /family/members/{memberId}:
+    get:
+      operationId: getFamilyMember
+      tags: [family]
+      summary: Get a specific family member
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Family member details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FamilyMember"
+        "404":
+          description: Not found
+
+  /family/members/{memberId}/vitals:
+    get:
+      operationId: getMemberVitals
+      tags: [vitals]
+      summary: Get vitals for a family member
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: days
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 7
+      responses:
+        "200":
+          description: Vitals data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VitalsReading"
+    post:
+      operationId: recordVitals
+      tags: [vitals]
+      summary: Record new vitals reading
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateVitalsRequest"
+      responses:
+        "201":
+          description: Vitals recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VitalsReading"
+
+  /family/members/{memberId}/baseline:
+    get:
+      operationId: getMemberBaseline
+      tags: [vitals]
+      summary: Get the AI-computed baseline for a family member
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Computed biometric baseline
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BiometricBaseline"
+
+  /family/members/{memberId}/summary:
+    get:
+      operationId: getMemberHealthSummary
+      tags: [vitals]
+      summary: Get the latest health summary for a family member
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Health summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthSummary"
+
+  /alerts:
+    get:
+      operationId: listAlerts
+      tags: [alerts]
+      summary: List all active alerts across the family
+      parameters:
+        - name: memberId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: resolved
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HealthAlert"
+
+  /alerts/{alertId}/resolve:
+    post:
+      operationId: resolveAlert
+      tags: [alerts]
+      summary: Mark an alert as resolved
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Alert resolved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthAlert"
+
+  /reports/{memberId}:
+    get:
+      operationId: generateBaselineReport
+      tags: [reports]
+      summary: Generate a clinical baseline report for a family member
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: days
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 30
+      responses:
+        "200":
+          description: Clinical baseline report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaselineReport"
+
+  /dashboard/overview:
+    get:
+      operationId: getDashboardOverview
+      tags: [family]
+      summary: Get a high-level overview of all family members' health status
+      responses:
+        "200":
+          description: Dashboard overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardOverview"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +267,344 @@ components:
       required:
         - status
 
+    FamilyMember:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        age:
+          type: integer
+        relationship:
+          type: string
+        avatarInitials:
+          type: string
+        wearableSource:
+          type: string
+          enum: [apple_watch, oura, whoop, garmin, fitbit, manual]
+        isHighRisk:
+          type: boolean
+        guardianViewEnabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - age
+        - relationship
+        - avatarInitials
+        - wearableSource
+        - isHighRisk
+        - guardianViewEnabled
+        - createdAt
+
+    CreateFamilyMemberRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        age:
+          type: integer
+        relationship:
+          type: string
+        wearableSource:
+          type: string
+          enum: [apple_watch, oura, whoop, garmin, fitbit, manual]
+        isHighRisk:
+          type: boolean
+        guardianViewEnabled:
+          type: boolean
+      required:
+        - name
+        - age
+        - relationship
+        - wearableSource
+        - isHighRisk
+        - guardianViewEnabled
+
+    VitalsReading:
+      type: object
+      properties:
+        id:
+          type: integer
+        memberId:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        heartRateVariability:
+          type: number
+          description: HRV in milliseconds
+        restingHeartRate:
+          type: number
+          description: Resting heart rate in bpm
+        spo2:
+          type: number
+          description: Blood oxygen saturation percentage
+        sleepScore:
+          type: number
+          nullable: true
+        recoveryScore:
+          type: number
+          nullable: true
+        bodyTemperature:
+          type: number
+          nullable: true
+          description: Body temperature in Celsius
+        respiratoryRate:
+          type: number
+          nullable: true
+        anomalyScore:
+          type: number
+          nullable: true
+          description: AI-computed anomaly score (0-1)
+        anomalyFlags:
+          type: array
+          items:
+            type: string
+          description: List of detected anomaly types
+      required:
+        - id
+        - memberId
+        - timestamp
+        - heartRateVariability
+        - restingHeartRate
+        - spo2
+        - anomalyFlags
+
+    CreateVitalsRequest:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        heartRateVariability:
+          type: number
+        restingHeartRate:
+          type: number
+        spo2:
+          type: number
+        sleepScore:
+          type: number
+          nullable: true
+        recoveryScore:
+          type: number
+          nullable: true
+        bodyTemperature:
+          type: number
+          nullable: true
+        respiratoryRate:
+          type: number
+          nullable: true
+      required:
+        - heartRateVariability
+        - restingHeartRate
+        - spo2
+
+    BiometricBaseline:
+      type: object
+      properties:
+        memberId:
+          type: integer
+        computedAt:
+          type: string
+          format: date-time
+        avgHrv:
+          type: number
+        stdHrv:
+          type: number
+        avgRestingHr:
+          type: number
+        stdRestingHr:
+          type: number
+        avgSpo2:
+          type: number
+        stdSpo2:
+          type: number
+        avgSleepScore:
+          type: number
+          nullable: true
+        dataPointCount:
+          type: integer
+        baselineDays:
+          type: integer
+      required:
+        - memberId
+        - computedAt
+        - avgHrv
+        - stdHrv
+        - avgRestingHr
+        - stdRestingHr
+        - avgSpo2
+        - stdSpo2
+        - dataPointCount
+        - baselineDays
+
+    HealthSummary:
+      type: object
+      properties:
+        memberId:
+          type: integer
+        latestReading:
+          $ref: "#/components/schemas/VitalsReading"
+        baseline:
+          $ref: "#/components/schemas/BiometricBaseline"
+        status:
+          type: string
+          enum: [excellent, good, fair, warning, critical]
+        trendHrv:
+          type: string
+          enum: [improving, stable, declining]
+        trendHr:
+          type: string
+          enum: [improving, stable, declining]
+        activeAlerts:
+          type: integer
+      required:
+        - memberId
+        - status
+        - activeAlerts
+        - trendHrv
+        - trendHr
+
+    HealthAlert:
+      type: object
+      properties:
+        id:
+          type: integer
+        memberId:
+          type: integer
+        memberName:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        alertType:
+          type: string
+          enum: [hrv_drop, elevated_hr, low_spo2, combined_stress, sleep_disruption, temperature_spike, recovery_deficit]
+        title:
+          type: string
+        description:
+          type: string
+        deviationPercent:
+          type: number
+        detectedAt:
+          type: string
+          format: date-time
+        resolved:
+          type: boolean
+        resolvedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - id
+        - memberId
+        - memberName
+        - severity
+        - alertType
+        - title
+        - description
+        - deviationPercent
+        - detectedAt
+        - resolved
+
+    BaselineReport:
+      type: object
+      properties:
+        memberId:
+          type: integer
+        memberName:
+          type: string
+        memberAge:
+          type: integer
+        reportGeneratedAt:
+          type: string
+          format: date-time
+        reportPeriodDays:
+          type: integer
+        wearableSource:
+          type: string
+        baseline:
+          $ref: "#/components/schemas/BiometricBaseline"
+        recentTrends:
+          type: object
+          properties:
+            hrvTrend:
+              type: string
+            hrTrend:
+              type: string
+            spo2Trend:
+              type: string
+            overallAssessment:
+              type: string
+          required:
+            - hrvTrend
+            - hrTrend
+            - spo2Trend
+            - overallAssessment
+        activeAlerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealthAlert"
+        vitalsHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/VitalsReading"
+        clinicalNotes:
+          type: string
+      required:
+        - memberId
+        - memberName
+        - memberAge
+        - reportGeneratedAt
+        - reportPeriodDays
+        - wearableSource
+        - recentTrends
+        - activeAlerts
+        - vitalsHistory
+        - clinicalNotes
+
+    MemberHealthCard:
+      type: object
+      properties:
+        member:
+          $ref: "#/components/schemas/FamilyMember"
+        summary:
+          $ref: "#/components/schemas/HealthSummary"
+        latestReading:
+          $ref: "#/components/schemas/VitalsReading"
+          nullable: true
+        activeAlertCount:
+          type: integer
+      required:
+        - member
+        - summary
+        - activeAlertCount
+
+    DashboardOverview:
+      type: object
+      properties:
+        totalMembers:
+          type: integer
+        membersWithAlerts:
+          type: integer
+        criticalAlerts:
+          type: integer
+        familyCards:
+          type: array
+          items:
+            $ref: "#/components/schemas/MemberHealthCard"
+        recentAlerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealthAlert"
+      required:
+        - totalMembers
+        - membersWithAlerts
+        - criticalAlerts
+        - familyCards
+        - recentAlerts
