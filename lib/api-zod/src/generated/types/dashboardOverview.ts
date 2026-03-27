@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * Vitals Overwatch API - Family Health Intelligence Platform
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 import type { HealthAlert } from "./healthAlert";
 import type { MemberHealthCard } from "./memberHealthCard";

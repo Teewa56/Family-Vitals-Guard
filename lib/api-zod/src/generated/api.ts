@@ -3,16 +3,31 @@
  * Do not edit manually.
  * Api
  * Vitals Overwatch API - Family Health Intelligence Platform
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 import * as zod from "zod";
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
+});
+
+/**
+ * @summary Get current authenticated user
+ */
+export const GetCurrentAuthUserResponse = zod.object({
+  isAuthenticated: zod.boolean(),
+  user: zod
+    .object({
+      id: zod.string(),
+      email: zod.string().nullish(),
+      firstName: zod.string().nullish(),
+      lastName: zod.string().nullish(),
+      profileImageUrl: zod.string().nullish(),
+    })
+    .nullish(),
 });
 
 /**
@@ -102,23 +117,15 @@ export const GetMemberVitalsResponseItem = zod.object({
   id: zod.number(),
   memberId: zod.number(),
   timestamp: zod.date(),
-  heartRateVariability: zod.number().describe("HRV in milliseconds"),
-  restingHeartRate: zod.number().describe("Resting heart rate in bpm"),
-  spo2: zod.number().describe("Blood oxygen saturation percentage"),
+  heartRateVariability: zod.number(),
+  restingHeartRate: zod.number(),
+  spo2: zod.number(),
   sleepScore: zod.number().nullish(),
   recoveryScore: zod.number().nullish(),
-  bodyTemperature: zod
-    .number()
-    .nullish()
-    .describe("Body temperature in Celsius"),
+  bodyTemperature: zod.number().nullish(),
   respiratoryRate: zod.number().nullish(),
-  anomalyScore: zod
-    .number()
-    .nullish()
-    .describe("AI-computed anomaly score (0-1)"),
-  anomalyFlags: zod
-    .array(zod.string())
-    .describe("List of detected anomaly types"),
+  anomalyScore: zod.number().nullish(),
+  anomalyFlags: zod.array(zod.string()),
 });
 export const GetMemberVitalsResponse = zod.array(GetMemberVitalsResponseItem);
 
@@ -175,23 +182,15 @@ export const GetMemberHealthSummaryResponse = zod.object({
       id: zod.number(),
       memberId: zod.number(),
       timestamp: zod.date(),
-      heartRateVariability: zod.number().describe("HRV in milliseconds"),
-      restingHeartRate: zod.number().describe("Resting heart rate in bpm"),
-      spo2: zod.number().describe("Blood oxygen saturation percentage"),
+      heartRateVariability: zod.number(),
+      restingHeartRate: zod.number(),
+      spo2: zod.number(),
       sleepScore: zod.number().nullish(),
       recoveryScore: zod.number().nullish(),
-      bodyTemperature: zod
-        .number()
-        .nullish()
-        .describe("Body temperature in Celsius"),
+      bodyTemperature: zod.number().nullish(),
       respiratoryRate: zod.number().nullish(),
-      anomalyScore: zod
-        .number()
-        .nullish()
-        .describe("AI-computed anomaly score (0-1)"),
-      anomalyFlags: zod
-        .array(zod.string())
-        .describe("List of detected anomaly types"),
+      anomalyScore: zod.number().nullish(),
+      anomalyFlags: zod.array(zod.string()),
     })
     .optional(),
   baseline: zod
@@ -228,15 +227,7 @@ export const ListAlertsResponseItem = zod.object({
   memberId: zod.number(),
   memberName: zod.string(),
   severity: zod.enum(["low", "medium", "high", "critical"]),
-  alertType: zod.enum([
-    "hrv_drop",
-    "elevated_hr",
-    "low_spo2",
-    "combined_stress",
-    "sleep_disruption",
-    "temperature_spike",
-    "recovery_deficit",
-  ]),
+  alertType: zod.string(),
   title: zod.string(),
   description: zod.string(),
   deviationPercent: zod.number(),
@@ -258,15 +249,7 @@ export const ResolveAlertResponse = zod.object({
   memberId: zod.number(),
   memberName: zod.string(),
   severity: zod.enum(["low", "medium", "high", "critical"]),
-  alertType: zod.enum([
-    "hrv_drop",
-    "elevated_hr",
-    "low_spo2",
-    "combined_stress",
-    "sleep_disruption",
-    "temperature_spike",
-    "recovery_deficit",
-  ]),
+  alertType: zod.string(),
   title: zod.string(),
   description: zod.string(),
   deviationPercent: zod.number(),
@@ -322,15 +305,7 @@ export const GenerateBaselineReportResponse = zod.object({
       memberId: zod.number(),
       memberName: zod.string(),
       severity: zod.enum(["low", "medium", "high", "critical"]),
-      alertType: zod.enum([
-        "hrv_drop",
-        "elevated_hr",
-        "low_spo2",
-        "combined_stress",
-        "sleep_disruption",
-        "temperature_spike",
-        "recovery_deficit",
-      ]),
+      alertType: zod.string(),
       title: zod.string(),
       description: zod.string(),
       deviationPercent: zod.number(),
@@ -344,23 +319,15 @@ export const GenerateBaselineReportResponse = zod.object({
       id: zod.number(),
       memberId: zod.number(),
       timestamp: zod.date(),
-      heartRateVariability: zod.number().describe("HRV in milliseconds"),
-      restingHeartRate: zod.number().describe("Resting heart rate in bpm"),
-      spo2: zod.number().describe("Blood oxygen saturation percentage"),
+      heartRateVariability: zod.number(),
+      restingHeartRate: zod.number(),
+      spo2: zod.number(),
       sleepScore: zod.number().nullish(),
       recoveryScore: zod.number().nullish(),
-      bodyTemperature: zod
-        .number()
-        .nullish()
-        .describe("Body temperature in Celsius"),
+      bodyTemperature: zod.number().nullish(),
       respiratoryRate: zod.number().nullish(),
-      anomalyScore: zod
-        .number()
-        .nullish()
-        .describe("AI-computed anomaly score (0-1)"),
-      anomalyFlags: zod
-        .array(zod.string())
-        .describe("List of detected anomaly types"),
+      anomalyScore: zod.number().nullish(),
+      anomalyFlags: zod.array(zod.string()),
     }),
   ),
   clinicalNotes: zod.string(),
@@ -400,25 +367,15 @@ export const GetDashboardOverviewResponse = zod.object({
             id: zod.number(),
             memberId: zod.number(),
             timestamp: zod.date(),
-            heartRateVariability: zod.number().describe("HRV in milliseconds"),
-            restingHeartRate: zod
-              .number()
-              .describe("Resting heart rate in bpm"),
-            spo2: zod.number().describe("Blood oxygen saturation percentage"),
+            heartRateVariability: zod.number(),
+            restingHeartRate: zod.number(),
+            spo2: zod.number(),
             sleepScore: zod.number().nullish(),
             recoveryScore: zod.number().nullish(),
-            bodyTemperature: zod
-              .number()
-              .nullish()
-              .describe("Body temperature in Celsius"),
+            bodyTemperature: zod.number().nullish(),
             respiratoryRate: zod.number().nullish(),
-            anomalyScore: zod
-              .number()
-              .nullish()
-              .describe("AI-computed anomaly score (0-1)"),
-            anomalyFlags: zod
-              .array(zod.string())
-              .describe("List of detected anomaly types"),
+            anomalyScore: zod.number().nullish(),
+            anomalyFlags: zod.array(zod.string()),
           })
           .optional(),
         baseline: zod
@@ -446,23 +403,15 @@ export const GetDashboardOverviewResponse = zod.object({
           id: zod.number(),
           memberId: zod.number(),
           timestamp: zod.date(),
-          heartRateVariability: zod.number().describe("HRV in milliseconds"),
-          restingHeartRate: zod.number().describe("Resting heart rate in bpm"),
-          spo2: zod.number().describe("Blood oxygen saturation percentage"),
+          heartRateVariability: zod.number(),
+          restingHeartRate: zod.number(),
+          spo2: zod.number(),
           sleepScore: zod.number().nullish(),
           recoveryScore: zod.number().nullish(),
-          bodyTemperature: zod
-            .number()
-            .nullish()
-            .describe("Body temperature in Celsius"),
+          bodyTemperature: zod.number().nullish(),
           respiratoryRate: zod.number().nullish(),
-          anomalyScore: zod
-            .number()
-            .nullish()
-            .describe("AI-computed anomaly score (0-1)"),
-          anomalyFlags: zod
-            .array(zod.string())
-            .describe("List of detected anomaly types"),
+          anomalyScore: zod.number().nullish(),
+          anomalyFlags: zod.array(zod.string()),
         })
         .nullish(),
       activeAlertCount: zod.number(),
@@ -474,15 +423,7 @@ export const GetDashboardOverviewResponse = zod.object({
       memberId: zod.number(),
       memberName: zod.string(),
       severity: zod.enum(["low", "medium", "high", "critical"]),
-      alertType: zod.enum([
-        "hrv_drop",
-        "elevated_hr",
-        "low_spo2",
-        "combined_stress",
-        "sleep_disruption",
-        "temperature_spike",
-        "recovery_deficit",
-      ]),
+      alertType: zod.string(),
       title: zod.string(),
       description: zod.string(),
       deviationPercent: zod.number(),
@@ -491,4 +432,213 @@ export const GetDashboardOverviewResponse = zod.object({
       resolvedAt: zod.date().nullish(),
     }),
   ),
+});
+
+/**
+ * @summary Get the current user's profile and stats
+ */
+export const GetUserProfileResponse = zod.object({
+  userId: zod.string(),
+  email: zod.string().nullish(),
+  firstName: zod.string().nullish(),
+  lastName: zod.string().nullish(),
+  profileImageUrl: zod.string().nullish(),
+  defaultFamilyMemberId: zod.number().nullish(),
+  timezone: zod.string(),
+  notificationsEnabled: zod.boolean(),
+  guardianAlertEmail: zod.string().nullish(),
+  onboardingComplete: zod.boolean(),
+});
+
+/**
+ * @summary Update user profile settings
+ */
+export const UpdateUserProfileBody = zod.object({
+  defaultFamilyMemberId: zod.number().nullish(),
+  timezone: zod.string().optional(),
+  notificationsEnabled: zod.boolean().optional(),
+  guardianAlertEmail: zod.string().nullish(),
+});
+
+export const UpdateUserProfileResponse = zod.object({
+  userId: zod.string(),
+  email: zod.string().nullish(),
+  firstName: zod.string().nullish(),
+  lastName: zod.string().nullish(),
+  profileImageUrl: zod.string().nullish(),
+  defaultFamilyMemberId: zod.number().nullish(),
+  timezone: zod.string(),
+  notificationsEnabled: zod.boolean(),
+  guardianAlertEmail: zod.string().nullish(),
+  onboardingComplete: zod.boolean(),
+});
+
+/**
+ * @summary Get usage and health stats for the user's profile
+ */
+export const GetProfileStatsResponse = zod.object({
+  totalReadings: zod.number(),
+  daysTracked: zod.number(),
+  alertsGenerated: zod.number(),
+  alertsResolved: zod.number(),
+  familyMemberCount: zod.number(),
+  connectedProviders: zod.number(),
+  currentStreak: zod
+    .number()
+    .describe("Consecutive days with at least one vitals reading"),
+  avgDailyReadings: zod.number(),
+  memberProgress: zod.array(
+    zod.object({
+      memberId: zod.number(),
+      memberName: zod.string(),
+      avatarInitials: zod.string(),
+      readingCount: zod.number(),
+      lastReadingAt: zod.date().nullish(),
+      status: zod.string(),
+      hrvTrend: zod.string(),
+      alertCount: zod.number(),
+    }),
+  ),
+});
+
+/**
+ * @summary List all available data providers and their connection status
+ */
+export const ListProvidersResponseItem = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  description: zod.string(),
+  icon: zod.string(),
+  category: zod.enum(["smartwatch", "ring", "strap", "manual", "platform"]),
+  connected: zod.boolean(),
+  lastSyncAt: zod.date().nullish(),
+  syncedReadings: zod.number(),
+  features: zod.array(zod.string()),
+  status: zod.enum(["connected", "disconnected", "syncing", "error"]),
+});
+export const ListProvidersResponse = zod.array(ListProvidersResponseItem);
+
+/**
+ * @summary Initiate connection to a data provider
+ */
+export const ConnectProviderParams = zod.object({
+  provider: zod.coerce.string(),
+});
+
+export const ConnectProviderBody = zod.object({
+  memberId: zod
+    .number()
+    .describe("Which family member to link this provider to"),
+  authCode: zod.string().nullish(),
+});
+
+export const ConnectProviderResponse = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  description: zod.string(),
+  icon: zod.string(),
+  category: zod.enum(["smartwatch", "ring", "strap", "manual", "platform"]),
+  connected: zod.boolean(),
+  lastSyncAt: zod.date().nullish(),
+  syncedReadings: zod.number(),
+  features: zod.array(zod.string()),
+  status: zod.enum(["connected", "disconnected", "syncing", "error"]),
+});
+
+/**
+ * @summary Disconnect a data provider
+ */
+export const DisconnectProviderParams = zod.object({
+  provider: zod.coerce.string(),
+});
+
+export const DisconnectProviderResponse = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  description: zod.string(),
+  icon: zod.string(),
+  category: zod.enum(["smartwatch", "ring", "strap", "manual", "platform"]),
+  connected: zod.boolean(),
+  lastSyncAt: zod.date().nullish(),
+  syncedReadings: zod.number(),
+  features: zod.array(zod.string()),
+  status: zod.enum(["connected", "disconnected", "syncing", "error"]),
+});
+
+/**
+ * @summary Trigger a manual data sync for a connected provider
+ */
+export const SyncProviderParams = zod.object({
+  provider: zod.coerce.string(),
+});
+
+export const SyncProviderBody = zod.object({
+  memberId: zod.number(),
+});
+
+export const SyncProviderResponse = zod.object({
+  provider: zod.string(),
+  readingsImported: zod.number(),
+  lastSyncAt: zod.date(),
+  message: zod.string(),
+});
+
+/**
+ * @summary Get the Biometric Time-Travel predictive health forecast for a member
+ */
+export const GetBiometricForecastParams = zod.object({
+  memberId: zod.coerce.number(),
+});
+
+export const getBiometricForecastQueryHorizonHoursDefault = 72;
+
+export const GetBiometricForecastQueryParams = zod.object({
+  horizonHours: zod.coerce
+    .number()
+    .default(getBiometricForecastQueryHorizonHoursDefault),
+});
+
+export const GetBiometricForecastResponse = zod.object({
+  memberId: zod.number(),
+  memberName: zod.string(),
+  generatedAt: zod.date(),
+  horizonHours: zod.number(),
+  dataQuality: zod.enum(["insufficient", "low", "moderate", "high"]),
+  overallRisk: zod.enum(["low", "moderate", "elevated", "high"]),
+  timeline: zod.array(
+    zod.object({
+      timestamp: zod.date(),
+      hrv: zod.number(),
+      hrvLower: zod.number(),
+      hrvUpper: zod.number(),
+      restingHr: zod.number(),
+      hrLower: zod.number(),
+      hrUpper: zod.number(),
+      spo2: zod.number(),
+      spo2Lower: zod.number(),
+      spo2Upper: zod.number(),
+      anomalyProbability: zod.number(),
+      isHistory: zod.boolean(),
+    }),
+  ),
+  predictedEvents: zod.array(
+    zod.object({
+      type: zod.enum([
+        "fever",
+        "respiratory_stress",
+        "cardiac_stress",
+        "burnout",
+        "infection",
+        "recovery",
+      ]),
+      label: zod.string(),
+      probability: zod.number(),
+      expectedOnset: zod.date(),
+      confidence: zod.enum(["low", "moderate", "high"]),
+      description: zod.string(),
+      warningSignals: zod.array(zod.string()),
+    }),
+  ),
+  trendSummary: zod.string(),
+  methodology: zod.string(),
 });

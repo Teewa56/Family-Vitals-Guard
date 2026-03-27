@@ -3,23 +3,37 @@
  * Do not edit manually.
  * Api
  * Vitals Overwatch API - Family Health Intelligence Platform
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 
 export * from "./baselineReport";
 export * from "./baselineReportRecentTrends";
 export * from "./biometricBaseline";
+export * from "./biometricForecast";
+export * from "./biometricForecastDataQuality";
+export * from "./biometricForecastOverallRisk";
+export * from "./connectProviderRequest";
 export * from "./createFamilyMemberRequest";
 export * from "./createFamilyMemberRequestWearableSource";
 export * from "./createVitalsRequest";
 export * from "./dashboardOverview";
+export * from "./dataProvider";
+export * from "./dataProviderCategory";
+export * from "./dataProviderStatus";
+export * from "./exchangeMobileAuthorizationCodeBody";
 export * from "./familyMember";
 export * from "./familyMemberWearableSource";
+export * from "./forecastPoint";
 export * from "./generateBaselineReportParams";
+export * from "./getBiometricForecastParams";
+export * from "./getCurrentAuthUserResponse";
+export * from "./getCurrentAuthUserResponseUser";
 export * from "./getMemberVitalsParams";
 export * from "./healthAlert";
-export * from "./healthAlertAlertType";
 export * from "./healthAlertSeverity";
+export * from "./healthEvent";
+export * from "./healthEventConfidence";
+export * from "./healthEventType";
 export * from "./healthStatus";
 export * from "./healthSummary";
 export * from "./healthSummaryStatus";
@@ -27,4 +41,10 @@ export * from "./healthSummaryTrendHr";
 export * from "./healthSummaryTrendHrv";
 export * from "./listAlertsParams";
 export * from "./memberHealthCard";
+export * from "./memberProgress";
+export * from "./profileStats";
+export * from "./syncProviderRequest";
+export * from "./syncResult";
+export * from "./updateUserProfileRequest";
+export * from "./userProfile";
 export * from "./vitalsReading";

@@ -3,9 +3,8 @@
  * Do not edit manually.
  * Api
  * Vitals Overwatch API - Family Health Intelligence Platform
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
-import type { HealthAlertAlertType } from "./healthAlertAlertType";
 import type { HealthAlertSeverity } from "./healthAlertSeverity";
 
 export interface HealthAlert {
@@ -13,7 +12,7 @@ export interface HealthAlert {
   memberId: number;
   memberName: string;
   severity: HealthAlertSeverity;
-  alertType: HealthAlertAlertType;
+  alertType: string;
   title: string;
   description: string;
   deviationPercent: number;

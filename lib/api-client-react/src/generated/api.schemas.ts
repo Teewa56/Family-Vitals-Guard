@@ -3,10 +3,30 @@
  * Do not edit manually.
  * Api
  * Vitals Overwatch API - Family Health Intelligence Platform
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 export interface HealthStatus {
   status: string;
+}
+
+export type GetCurrentAuthUserResponseUser = {
+  id: string;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  profileImageUrl?: string | null;
+} | null;
+
+export interface GetCurrentAuthUserResponse {
+  isAuthenticated: boolean;
+  user?: GetCurrentAuthUserResponseUser;
+}
+
+export interface ExchangeMobileAuthorizationCodeBody {
+  code: string;
+  state: string;
+  codeVerifier: string;
+  nonce: string;
 }
 
 export type FamilyMemberWearableSource =
@@ -58,20 +78,14 @@ export interface VitalsReading {
   id: number;
   memberId: number;
   timestamp: string;
-  /** HRV in milliseconds */
   heartRateVariability: number;
-  /** Resting heart rate in bpm */
   restingHeartRate: number;
-  /** Blood oxygen saturation percentage */
   spo2: number;
   sleepScore?: number | null;
   recoveryScore?: number | null;
-  /** Body temperature in Celsius */
   bodyTemperature?: number | null;
   respiratoryRate?: number | null;
-  /** AI-computed anomaly score (0-1) */
   anomalyScore?: number | null;
-  /** List of detected anomaly types */
   anomalyFlags: string[];
 }
 
@@ -149,25 +163,12 @@ export const HealthAlertSeverity = {
   critical: "critical",
 } as const;
 
-export type HealthAlertAlertType =
-  (typeof HealthAlertAlertType)[keyof typeof HealthAlertAlertType];
-
-export const HealthAlertAlertType = {
-  hrv_drop: "hrv_drop",
-  elevated_hr: "elevated_hr",
-  low_spo2: "low_spo2",
-  combined_stress: "combined_stress",
-  sleep_disruption: "sleep_disruption",
-  temperature_spike: "temperature_spike",
-  recovery_deficit: "recovery_deficit",
-} as const;
-
 export interface HealthAlert {
   id: number;
   memberId: number;
   memberName: string;
   severity: HealthAlertSeverity;
-  alertType: HealthAlertAlertType;
+  alertType: string;
   title: string;
   description: string;
   deviationPercent: number;
@@ -212,6 +213,180 @@ export interface DashboardOverview {
   recentAlerts: HealthAlert[];
 }
 
+export interface UserProfile {
+  userId: string;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  profileImageUrl?: string | null;
+  defaultFamilyMemberId?: number | null;
+  timezone: string;
+  notificationsEnabled: boolean;
+  guardianAlertEmail?: string | null;
+  onboardingComplete: boolean;
+}
+
+export interface UpdateUserProfileRequest {
+  defaultFamilyMemberId?: number | null;
+  timezone?: string;
+  notificationsEnabled?: boolean;
+  guardianAlertEmail?: string | null;
+}
+
+export interface MemberProgress {
+  memberId: number;
+  memberName: string;
+  avatarInitials: string;
+  readingCount: number;
+  lastReadingAt?: string | null;
+  status: string;
+  hrvTrend: string;
+  alertCount: number;
+}
+
+export interface ProfileStats {
+  totalReadings: number;
+  daysTracked: number;
+  alertsGenerated: number;
+  alertsResolved: number;
+  familyMemberCount: number;
+  connectedProviders: number;
+  /** Consecutive days with at least one vitals reading */
+  currentStreak: number;
+  avgDailyReadings: number;
+  memberProgress: MemberProgress[];
+}
+
+export type DataProviderCategory =
+  (typeof DataProviderCategory)[keyof typeof DataProviderCategory];
+
+export const DataProviderCategory = {
+  smartwatch: "smartwatch",
+  ring: "ring",
+  strap: "strap",
+  manual: "manual",
+  platform: "platform",
+} as const;
+
+export type DataProviderStatus =
+  (typeof DataProviderStatus)[keyof typeof DataProviderStatus];
+
+export const DataProviderStatus = {
+  connected: "connected",
+  disconnected: "disconnected",
+  syncing: "syncing",
+  error: "error",
+} as const;
+
+export interface DataProvider {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: DataProviderCategory;
+  connected: boolean;
+  lastSyncAt?: string | null;
+  syncedReadings: number;
+  features: string[];
+  status: DataProviderStatus;
+}
+
+export interface ConnectProviderRequest {
+  /** Which family member to link this provider to */
+  memberId: number;
+  authCode?: string | null;
+}
+
+export interface SyncProviderRequest {
+  memberId: number;
+}
+
+export interface SyncResult {
+  provider: string;
+  readingsImported: number;
+  lastSyncAt: string;
+  message: string;
+}
+
+export interface ForecastPoint {
+  timestamp: string;
+  hrv: number;
+  hrvLower: number;
+  hrvUpper: number;
+  restingHr: number;
+  hrLower: number;
+  hrUpper: number;
+  spo2: number;
+  spo2Lower: number;
+  spo2Upper: number;
+  anomalyProbability: number;
+  isHistory: boolean;
+}
+
+export type HealthEventType =
+  (typeof HealthEventType)[keyof typeof HealthEventType];
+
+export const HealthEventType = {
+  fever: "fever",
+  respiratory_stress: "respiratory_stress",
+  cardiac_stress: "cardiac_stress",
+  burnout: "burnout",
+  infection: "infection",
+  recovery: "recovery",
+} as const;
+
+export type HealthEventConfidence =
+  (typeof HealthEventConfidence)[keyof typeof HealthEventConfidence];
+
+export const HealthEventConfidence = {
+  low: "low",
+  moderate: "moderate",
+  high: "high",
+} as const;
+
+export interface HealthEvent {
+  type: HealthEventType;
+  label: string;
+  probability: number;
+  expectedOnset: string;
+  confidence: HealthEventConfidence;
+  description: string;
+  warningSignals: string[];
+}
+
+export type BiometricForecastDataQuality =
+  (typeof BiometricForecastDataQuality)[keyof typeof BiometricForecastDataQuality];
+
+export const BiometricForecastDataQuality = {
+  insufficient: "insufficient",
+  low: "low",
+  moderate: "moderate",
+  high: "high",
+} as const;
+
+export type BiometricForecastOverallRisk =
+  (typeof BiometricForecastOverallRisk)[keyof typeof BiometricForecastOverallRisk];
+
+export const BiometricForecastOverallRisk = {
+  low: "low",
+  moderate: "moderate",
+  elevated: "elevated",
+  high: "high",
+} as const;
+
+export interface BiometricForecast {
+  memberId: number;
+  memberName: string;
+  generatedAt: string;
+  horizonHours: number;
+  dataQuality: BiometricForecastDataQuality;
+  overallRisk: BiometricForecastOverallRisk;
+  timeline: ForecastPoint[];
+  predictedEvents: HealthEvent[];
+  trendSummary: string;
+  methodology: string;
+}
+
 export type GetMemberVitalsParams = {
   days?: number;
 };
@@ -223,4 +398,8 @@ export type ListAlertsParams = {
 
 export type GenerateBaselineReportParams = {
   days?: number;
+};
+
+export type GetBiometricForecastParams = {
+  horizonHours?: number;
 };

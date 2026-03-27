@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Api
-  version: 0.1.0
+  version: 0.2.0
   description: Vitals Overwatch API - Family Health Intelligence Platform
 servers:
   - url: /api
@@ -9,6 +9,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
   - name: family
     description: Family member management
   - name: vitals
@@ -17,6 +19,12 @@ tags:
     description: Anomaly alerts and events
   - name: reports
     description: Baseline report generation
+  - name: profile
+    description: User profile and settings
+  - name: providers
+    description: External data provider connections
+  - name: forecast
+    description: Biometric Time-Travel predictive forecast
 
 paths:
   /healthz:
@@ -24,7 +32,6 @@ paths:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -32,6 +39,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/user:
+    get:
+      operationId: getCurrentAuthUser
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current auth state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetCurrentAuthUserResponse"
 
   /family/members:
     get:
@@ -257,6 +277,158 @@ paths:
               schema:
                 $ref: "#/components/schemas/DashboardOverview"
 
+  /profile:
+    get:
+      operationId: getUserProfile
+      tags: [profile]
+      summary: Get the current user's profile and stats
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+    patch:
+      operationId: updateUserProfile
+      tags: [profile]
+      summary: Update user profile settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserProfileRequest"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  /profile/stats:
+    get:
+      operationId: getProfileStats
+      tags: [profile]
+      summary: Get usage and health stats for the user's profile
+      responses:
+        "200":
+          description: Profile statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileStats"
+
+  /providers:
+    get:
+      operationId: listProviders
+      tags: [providers]
+      summary: List all available data providers and their connection status
+      responses:
+        "200":
+          description: Provider list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DataProvider"
+
+  /providers/{provider}/connect:
+    post:
+      operationId: connectProvider
+      tags: [providers]
+      summary: Initiate connection to a data provider
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectProviderRequest"
+      responses:
+        "200":
+          description: Connection initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataProvider"
+
+  /providers/{provider}/disconnect:
+    post:
+      operationId: disconnectProvider
+      tags: [providers]
+      summary: Disconnect a data provider
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Disconnected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataProvider"
+
+  /providers/{provider}/sync:
+    post:
+      operationId: syncProvider
+      tags: [providers]
+      summary: Trigger a manual data sync for a connected provider
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SyncProviderRequest"
+      responses:
+        "200":
+          description: Sync result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncResult"
+
+  /forecast/{memberId}:
+    get:
+      operationId: getBiometricForecast
+      tags: [forecast]
+      summary: Get the Biometric Time-Travel predictive health forecast for a member
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: horizonHours
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 72
+      responses:
+        "200":
+          description: Biometric forecast
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BiometricForecast"
+
 components:
   schemas:
     HealthStatus:
@@ -266,6 +438,51 @@ components:
           type: string
       required:
         - status
+
+    GetCurrentAuthUserResponse:
+      type: object
+      properties:
+        isAuthenticated:
+          type: boolean
+        user:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+            email:
+              type: string
+              nullable: true
+            firstName:
+              type: string
+              nullable: true
+            lastName:
+              type: string
+              nullable: true
+            profileImageUrl:
+              type: string
+              nullable: true
+          required:
+            - id
+      required:
+        - isAuthenticated
+
+    ExchangeMobileAuthorizationCodeBody:
+      type: object
+      properties:
+        code:
+          type: string
+        state:
+          type: string
+        codeVerifier:
+          type: string
+        nonce:
+          type: string
+      required:
+        - code
+        - state
+        - codeVerifier
+        - nonce
 
     FamilyMember:
       type: object
@@ -337,13 +554,10 @@ components:
           format: date-time
         heartRateVariability:
           type: number
-          description: HRV in milliseconds
         restingHeartRate:
           type: number
-          description: Resting heart rate in bpm
         spo2:
           type: number
-          description: Blood oxygen saturation percentage
         sleepScore:
           type: number
           nullable: true
@@ -353,19 +567,16 @@ components:
         bodyTemperature:
           type: number
           nullable: true
-          description: Body temperature in Celsius
         respiratoryRate:
           type: number
           nullable: true
         anomalyScore:
           type: number
           nullable: true
-          description: AI-computed anomaly score (0-1)
         anomalyFlags:
           type: array
           items:
             type: string
-          description: List of detected anomaly types
       required:
         - id
         - memberId
@@ -484,7 +695,6 @@ components:
           enum: [low, medium, high, critical]
         alertType:
           type: string
-          enum: [hrv_drop, elevated_hr, low_spo2, combined_stress, sleep_disruption, temperature_spike, recovery_deficit]
         title:
           type: string
         description:
@@ -608,3 +818,310 @@ components:
         - criticalAlerts
         - familyCards
         - recentAlerts
+
+    UserProfile:
+      type: object
+      properties:
+        userId:
+          type: string
+        email:
+          type: string
+          nullable: true
+        firstName:
+          type: string
+          nullable: true
+        lastName:
+          type: string
+          nullable: true
+        profileImageUrl:
+          type: string
+          nullable: true
+        defaultFamilyMemberId:
+          type: integer
+          nullable: true
+        timezone:
+          type: string
+        notificationsEnabled:
+          type: boolean
+        guardianAlertEmail:
+          type: string
+          nullable: true
+        onboardingComplete:
+          type: boolean
+      required:
+        - userId
+        - timezone
+        - notificationsEnabled
+        - onboardingComplete
+
+    UpdateUserProfileRequest:
+      type: object
+      properties:
+        defaultFamilyMemberId:
+          type: integer
+          nullable: true
+        timezone:
+          type: string
+        notificationsEnabled:
+          type: boolean
+        guardianAlertEmail:
+          type: string
+          nullable: true
+
+    ProfileStats:
+      type: object
+      properties:
+        totalReadings:
+          type: integer
+        daysTracked:
+          type: integer
+        alertsGenerated:
+          type: integer
+        alertsResolved:
+          type: integer
+        familyMemberCount:
+          type: integer
+        connectedProviders:
+          type: integer
+        currentStreak:
+          type: integer
+          description: Consecutive days with at least one vitals reading
+        avgDailyReadings:
+          type: number
+        memberProgress:
+          type: array
+          items:
+            $ref: "#/components/schemas/MemberProgress"
+      required:
+        - totalReadings
+        - daysTracked
+        - alertsGenerated
+        - alertsResolved
+        - familyMemberCount
+        - connectedProviders
+        - currentStreak
+        - avgDailyReadings
+        - memberProgress
+
+    MemberProgress:
+      type: object
+      properties:
+        memberId:
+          type: integer
+        memberName:
+          type: string
+        avatarInitials:
+          type: string
+        readingCount:
+          type: integer
+        lastReadingAt:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+        hrvTrend:
+          type: string
+        alertCount:
+          type: integer
+      required:
+        - memberId
+        - memberName
+        - avatarInitials
+        - readingCount
+        - status
+        - hrvTrend
+        - alertCount
+
+    DataProvider:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+        category:
+          type: string
+          enum: [smartwatch, ring, strap, manual, platform]
+        connected:
+          type: boolean
+        lastSyncAt:
+          type: string
+          format: date-time
+          nullable: true
+        syncedReadings:
+          type: integer
+        features:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [connected, disconnected, syncing, error]
+      required:
+        - id
+        - name
+        - description
+        - icon
+        - category
+        - connected
+        - features
+        - status
+        - syncedReadings
+
+    ConnectProviderRequest:
+      type: object
+      properties:
+        memberId:
+          type: integer
+          description: Which family member to link this provider to
+        authCode:
+          type: string
+          nullable: true
+      required:
+        - memberId
+
+    SyncProviderRequest:
+      type: object
+      properties:
+        memberId:
+          type: integer
+      required:
+        - memberId
+
+    SyncResult:
+      type: object
+      properties:
+        provider:
+          type: string
+        readingsImported:
+          type: integer
+        lastSyncAt:
+          type: string
+          format: date-time
+        message:
+          type: string
+      required:
+        - provider
+        - readingsImported
+        - lastSyncAt
+        - message
+
+    ForecastPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        hrv:
+          type: number
+        hrvLower:
+          type: number
+        hrvUpper:
+          type: number
+        restingHr:
+          type: number
+        hrLower:
+          type: number
+        hrUpper:
+          type: number
+        spo2:
+          type: number
+        spo2Lower:
+          type: number
+        spo2Upper:
+          type: number
+        anomalyProbability:
+          type: number
+        isHistory:
+          type: boolean
+      required:
+        - timestamp
+        - hrv
+        - hrvLower
+        - hrvUpper
+        - restingHr
+        - hrLower
+        - hrUpper
+        - spo2
+        - spo2Lower
+        - spo2Upper
+        - anomalyProbability
+        - isHistory
+
+    HealthEvent:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [fever, respiratory_stress, cardiac_stress, burnout, infection, recovery]
+        label:
+          type: string
+        probability:
+          type: number
+        expectedOnset:
+          type: string
+          format: date-time
+        confidence:
+          type: string
+          enum: [low, moderate, high]
+        description:
+          type: string
+        warningSignals:
+          type: array
+          items:
+            type: string
+      required:
+        - type
+        - label
+        - probability
+        - expectedOnset
+        - confidence
+        - description
+        - warningSignals
+
+    BiometricForecast:
+      type: object
+      properties:
+        memberId:
+          type: integer
+        memberName:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        horizonHours:
+          type: integer
+        dataQuality:
+          type: string
+          enum: [insufficient, low, moderate, high]
+        overallRisk:
+          type: string
+          enum: [low, moderate, elevated, high]
+        timeline:
+          type: array
+          items:
+            $ref: "#/components/schemas/ForecastPoint"
+        predictedEvents:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealthEvent"
+        trendSummary:
+          type: string
+        methodology:
+          type: string
+      required:
+        - memberId
+        - memberName
+        - generatedAt
+        - horizonHours
+        - dataQuality
+        - overallRisk
+        - timeline
+        - predictedEvents
+        - trendSummary
+        - methodology

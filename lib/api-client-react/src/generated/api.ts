@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * Vitals Overwatch API - Family Health Intelligence Platform
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
@@ -19,16 +19,26 @@ import type {
 import type {
   BaselineReport,
   BiometricBaseline,
+  BiometricForecast,
+  ConnectProviderRequest,
   CreateFamilyMemberRequest,
   CreateVitalsRequest,
   DashboardOverview,
+  DataProvider,
   FamilyMember,
   GenerateBaselineReportParams,
+  GetBiometricForecastParams,
+  GetCurrentAuthUserResponse,
   GetMemberVitalsParams,
   HealthAlert,
   HealthStatus,
   HealthSummary,
   ListAlertsParams,
+  ProfileStats,
+  SyncProviderRequest,
+  SyncResult,
+  UpdateUserProfileRequest,
+  UserProfile,
   VitalsReading,
 } from "./api.schemas";
 
@@ -42,7 +52,6 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const getHealthCheckUrl = () => {
@@ -109,6 +118,81 @@ export function useHealthCheck<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get current authenticated user
+ */
+export const getGetCurrentAuthUserUrl = () => {
+  return `/api/auth/user`;
+};
+
+export const getCurrentAuthUser = async (
+  options?: RequestInit,
+): Promise<GetCurrentAuthUserResponse> => {
+  return customFetch<GetCurrentAuthUserResponse>(getGetCurrentAuthUserUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCurrentAuthUserQueryKey = () => {
+  return [`/api/auth/user`] as const;
+};
+
+export const getGetCurrentAuthUserQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCurrentAuthUser>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getCurrentAuthUser>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetCurrentAuthUserQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getCurrentAuthUser>>
+  > = ({ signal }) => getCurrentAuthUser({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCurrentAuthUser>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetCurrentAuthUserQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCurrentAuthUser>>
+>;
+export type GetCurrentAuthUserQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get current authenticated user
+ */
+
+export function useGetCurrentAuthUser<
+  TData = Awaited<ReturnType<typeof getCurrentAuthUser>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getCurrentAuthUser>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCurrentAuthUserQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
@@ -1111,6 +1195,692 @@ export function useGetDashboardOverview<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetDashboardOverviewQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get the current user's profile and stats
+ */
+export const getGetUserProfileUrl = () => {
+  return `/api/profile`;
+};
+
+export const getUserProfile = async (
+  options?: RequestInit,
+): Promise<UserProfile> => {
+  return customFetch<UserProfile>(getGetUserProfileUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetUserProfileQueryKey = () => {
+  return [`/api/profile`] as const;
+};
+
+export const getGetUserProfileQueryOptions = <
+  TData = Awaited<ReturnType<typeof getUserProfile>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getUserProfile>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetUserProfileQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserProfile>>> = ({
+    signal,
+  }) => getUserProfile({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getUserProfile>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetUserProfileQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getUserProfile>>
+>;
+export type GetUserProfileQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get the current user's profile and stats
+ */
+
+export function useGetUserProfile<
+  TData = Awaited<ReturnType<typeof getUserProfile>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getUserProfile>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetUserProfileQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update user profile settings
+ */
+export const getUpdateUserProfileUrl = () => {
+  return `/api/profile`;
+};
+
+export const updateUserProfile = async (
+  updateUserProfileRequest: UpdateUserProfileRequest,
+  options?: RequestInit,
+): Promise<UserProfile> => {
+  return customFetch<UserProfile>(getUpdateUserProfileUrl(), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateUserProfileRequest),
+  });
+};
+
+export const getUpdateUserProfileMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateUserProfile>>,
+    TError,
+    { data: BodyType<UpdateUserProfileRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateUserProfile>>,
+  TError,
+  { data: BodyType<UpdateUserProfileRequest> },
+  TContext
+> => {
+  const mutationKey = ["updateUserProfile"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateUserProfile>>,
+    { data: BodyType<UpdateUserProfileRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return updateUserProfile(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateUserProfileMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateUserProfile>>
+>;
+export type UpdateUserProfileMutationBody = BodyType<UpdateUserProfileRequest>;
+export type UpdateUserProfileMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update user profile settings
+ */
+export const useUpdateUserProfile = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateUserProfile>>,
+    TError,
+    { data: BodyType<UpdateUserProfileRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateUserProfile>>,
+  TError,
+  { data: BodyType<UpdateUserProfileRequest> },
+  TContext
+> => {
+  return useMutation(getUpdateUserProfileMutationOptions(options));
+};
+
+/**
+ * @summary Get usage and health stats for the user's profile
+ */
+export const getGetProfileStatsUrl = () => {
+  return `/api/profile/stats`;
+};
+
+export const getProfileStats = async (
+  options?: RequestInit,
+): Promise<ProfileStats> => {
+  return customFetch<ProfileStats>(getGetProfileStatsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetProfileStatsQueryKey = () => {
+  return [`/api/profile/stats`] as const;
+};
+
+export const getGetProfileStatsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getProfileStats>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getProfileStats>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetProfileStatsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getProfileStats>>> = ({
+    signal,
+  }) => getProfileStats({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getProfileStats>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetProfileStatsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getProfileStats>>
+>;
+export type GetProfileStatsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get usage and health stats for the user's profile
+ */
+
+export function useGetProfileStats<
+  TData = Awaited<ReturnType<typeof getProfileStats>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getProfileStats>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetProfileStatsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List all available data providers and their connection status
+ */
+export const getListProvidersUrl = () => {
+  return `/api/providers`;
+};
+
+export const listProviders = async (
+  options?: RequestInit,
+): Promise<DataProvider[]> => {
+  return customFetch<DataProvider[]>(getListProvidersUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListProvidersQueryKey = () => {
+  return [`/api/providers`] as const;
+};
+
+export const getListProvidersQueryOptions = <
+  TData = Awaited<ReturnType<typeof listProviders>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listProviders>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListProvidersQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listProviders>>> = ({
+    signal,
+  }) => listProviders({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listProviders>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListProvidersQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listProviders>>
+>;
+export type ListProvidersQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all available data providers and their connection status
+ */
+
+export function useListProviders<
+  TData = Awaited<ReturnType<typeof listProviders>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listProviders>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListProvidersQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Initiate connection to a data provider
+ */
+export const getConnectProviderUrl = (provider: string) => {
+  return `/api/providers/${provider}/connect`;
+};
+
+export const connectProvider = async (
+  provider: string,
+  connectProviderRequest: ConnectProviderRequest,
+  options?: RequestInit,
+): Promise<DataProvider> => {
+  return customFetch<DataProvider>(getConnectProviderUrl(provider), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(connectProviderRequest),
+  });
+};
+
+export const getConnectProviderMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof connectProvider>>,
+    TError,
+    { provider: string; data: BodyType<ConnectProviderRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof connectProvider>>,
+  TError,
+  { provider: string; data: BodyType<ConnectProviderRequest> },
+  TContext
+> => {
+  const mutationKey = ["connectProvider"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof connectProvider>>,
+    { provider: string; data: BodyType<ConnectProviderRequest> }
+  > = (props) => {
+    const { provider, data } = props ?? {};
+
+    return connectProvider(provider, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ConnectProviderMutationResult = NonNullable<
+  Awaited<ReturnType<typeof connectProvider>>
+>;
+export type ConnectProviderMutationBody = BodyType<ConnectProviderRequest>;
+export type ConnectProviderMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Initiate connection to a data provider
+ */
+export const useConnectProvider = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof connectProvider>>,
+    TError,
+    { provider: string; data: BodyType<ConnectProviderRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof connectProvider>>,
+  TError,
+  { provider: string; data: BodyType<ConnectProviderRequest> },
+  TContext
+> => {
+  return useMutation(getConnectProviderMutationOptions(options));
+};
+
+/**
+ * @summary Disconnect a data provider
+ */
+export const getDisconnectProviderUrl = (provider: string) => {
+  return `/api/providers/${provider}/disconnect`;
+};
+
+export const disconnectProvider = async (
+  provider: string,
+  options?: RequestInit,
+): Promise<DataProvider> => {
+  return customFetch<DataProvider>(getDisconnectProviderUrl(provider), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getDisconnectProviderMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof disconnectProvider>>,
+    TError,
+    { provider: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof disconnectProvider>>,
+  TError,
+  { provider: string },
+  TContext
+> => {
+  const mutationKey = ["disconnectProvider"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof disconnectProvider>>,
+    { provider: string }
+  > = (props) => {
+    const { provider } = props ?? {};
+
+    return disconnectProvider(provider, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DisconnectProviderMutationResult = NonNullable<
+  Awaited<ReturnType<typeof disconnectProvider>>
+>;
+
+export type DisconnectProviderMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Disconnect a data provider
+ */
+export const useDisconnectProvider = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof disconnectProvider>>,
+    TError,
+    { provider: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof disconnectProvider>>,
+  TError,
+  { provider: string },
+  TContext
+> => {
+  return useMutation(getDisconnectProviderMutationOptions(options));
+};
+
+/**
+ * @summary Trigger a manual data sync for a connected provider
+ */
+export const getSyncProviderUrl = (provider: string) => {
+  return `/api/providers/${provider}/sync`;
+};
+
+export const syncProvider = async (
+  provider: string,
+  syncProviderRequest: SyncProviderRequest,
+  options?: RequestInit,
+): Promise<SyncResult> => {
+  return customFetch<SyncResult>(getSyncProviderUrl(provider), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(syncProviderRequest),
+  });
+};
+
+export const getSyncProviderMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof syncProvider>>,
+    TError,
+    { provider: string; data: BodyType<SyncProviderRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof syncProvider>>,
+  TError,
+  { provider: string; data: BodyType<SyncProviderRequest> },
+  TContext
+> => {
+  const mutationKey = ["syncProvider"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof syncProvider>>,
+    { provider: string; data: BodyType<SyncProviderRequest> }
+  > = (props) => {
+    const { provider, data } = props ?? {};
+
+    return syncProvider(provider, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SyncProviderMutationResult = NonNullable<
+  Awaited<ReturnType<typeof syncProvider>>
+>;
+export type SyncProviderMutationBody = BodyType<SyncProviderRequest>;
+export type SyncProviderMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Trigger a manual data sync for a connected provider
+ */
+export const useSyncProvider = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof syncProvider>>,
+    TError,
+    { provider: string; data: BodyType<SyncProviderRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof syncProvider>>,
+  TError,
+  { provider: string; data: BodyType<SyncProviderRequest> },
+  TContext
+> => {
+  return useMutation(getSyncProviderMutationOptions(options));
+};
+
+/**
+ * @summary Get the Biometric Time-Travel predictive health forecast for a member
+ */
+export const getGetBiometricForecastUrl = (
+  memberId: number,
+  params?: GetBiometricForecastParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/forecast/${memberId}?${stringifiedParams}`
+    : `/api/forecast/${memberId}`;
+};
+
+export const getBiometricForecast = async (
+  memberId: number,
+  params?: GetBiometricForecastParams,
+  options?: RequestInit,
+): Promise<BiometricForecast> => {
+  return customFetch<BiometricForecast>(
+    getGetBiometricForecastUrl(memberId, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetBiometricForecastQueryKey = (
+  memberId: number,
+  params?: GetBiometricForecastParams,
+) => {
+  return [`/api/forecast/${memberId}`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetBiometricForecastQueryOptions = <
+  TData = Awaited<ReturnType<typeof getBiometricForecast>>,
+  TError = ErrorType<unknown>,
+>(
+  memberId: number,
+  params?: GetBiometricForecastParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBiometricForecast>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetBiometricForecastQueryKey(memberId, params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getBiometricForecast>>
+  > = ({ signal }) =>
+    getBiometricForecast(memberId, params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!memberId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getBiometricForecast>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetBiometricForecastQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getBiometricForecast>>
+>;
+export type GetBiometricForecastQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get the Biometric Time-Travel predictive health forecast for a member
+ */
+
+export function useGetBiometricForecast<
+  TData = Awaited<ReturnType<typeof getBiometricForecast>>,
+  TError = ErrorType<unknown>,
+>(
+  memberId: number,
+  params?: GetBiometricForecastParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBiometricForecast>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetBiometricForecastQueryOptions(
+    memberId,
+    params,
+    options,
+  );
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
