@@ -88,14 +88,14 @@ export function AppSidebar() {
         {user && (
           <div className="flex items-center gap-3 w-full">
             <Avatar className="h-9 w-9 border border-white/10">
-              <AvatarImage src={user.profileImage} />
+              <AvatarImage src={user.profileImageUrl ?? undefined} />
               <AvatarFallback className="bg-secondary text-foreground">
-                {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                {user.firstName ? user.firstName.charAt(0).toUpperCase() : "U"}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col flex-1 overflow-hidden">
-              <span className="text-sm font-medium text-foreground truncate">{user.name || "User"}</span>
-              <span className="text-xs text-muted-foreground truncate">{user.name ? `@${user.name.toLowerCase().replace(/\s/g, '')}` : "Free Plan"}</span>
+              <span className="text-sm font-medium text-foreground truncate">{[user.firstName, user.lastName].filter(Boolean).join(" ") || "User"}</span>
+              <span className="text-xs text-muted-foreground truncate">{user.email ? user.email.split("@")[0] : "Free Plan"}</span>
             </div>
             <button onClick={() => logout()} className="p-2 hover:bg-white/5 rounded-md text-muted-foreground hover:text-destructive transition-colors">
               <LogOut className="w-4 h-4" />

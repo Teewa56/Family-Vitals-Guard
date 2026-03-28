@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useListAlerts, useResolveAlert, useGetDashboardOverview } from "@workspace/api-client-react";
-import { ShieldAlert, CheckCircle, Clock, Filter, AlertTriangle } from "lucide-react";
+import { ShieldAlert, CheckCircle, Clock, Filter, AlertTriangle, Activity } from "lucide-react";
 import { formatRelative, getSeverityColor, cn } from "@/lib/utils";
 import { AnomalyBadge } from "@/components/ui/anomaly-badge";
 import { useQueryClient } from "@tanstack/react-query";

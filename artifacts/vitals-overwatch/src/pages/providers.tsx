@@ -30,8 +30,8 @@ export default function ProvidersPage() {
     if (!selectedProvider || !selectedMemberId) return;
 
     connectMutation.mutate({
+      provider: selectedProvider.id,
       data: {
-        providerId: selectedProvider.id,
         memberId: Number(selectedMemberId)
       }
     }, {
@@ -47,7 +47,7 @@ export default function ProvidersPage() {
   };
 
   const handleDisconnect = (providerId: string) => {
-    disconnectMutation.mutate({ providerId }, {
+    disconnectMutation.mutate({ provider: providerId }, {
       onSuccess: () => {
         toast({ title: "Provider disconnected" });
         refetch();
@@ -56,8 +56,10 @@ export default function ProvidersPage() {
   };
 
   const handleSync = (providerId: string) => {
+    const defaultMemberId = familyMembers?.[0]?.id ?? 1;
     syncMutation.mutate({
-      data: { providerId }
+      provider: providerId,
+      data: { memberId: defaultMemberId }
     }, {
       onSuccess: (data) => {
         toast({ 
@@ -126,7 +128,7 @@ export default function ProvidersPage() {
                 <span className="px-2 py-1 rounded bg-white/5 border border-white/10 text-[10px] uppercase font-medium text-foreground/80">
                   {provider.category}
                 </span>
-                {provider.supportedMetrics.map(metric => (
+                {provider.features.map(metric => (
                   <span key={metric} className="px-2 py-1 rounded bg-primary/10 border border-primary/20 text-[10px] uppercase font-medium text-primary">
                     {metric}
                   </span>
@@ -141,7 +143,7 @@ export default function ProvidersPage() {
                   </div>
                   <div className="flex justify-between">
                     <span>Readings:</span>
-                    <span className="text-foreground font-medium">{provider.syncedReadingCount || 0}</span>
+                    <span className="text-foreground font-medium">{provider.syncedReadings || 0}</span>
                   </div>
                 </div>
               )}

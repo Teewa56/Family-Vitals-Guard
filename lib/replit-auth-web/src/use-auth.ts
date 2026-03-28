@@ -1,7 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import type { AuthUser } from "@workspace/api-client-react";
 
-export type { AuthUser };
+export interface AuthUser {
+  id: string;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  profileImageUrl?: string | null;
+}
 
 interface AuthState {
   user: AuthUser | null;
@@ -9,6 +14,15 @@ interface AuthState {
   isAuthenticated: boolean;
   login: () => void;
   logout: () => void;
+}
+
+function getBase(): string {
+  try {
+    const base = (import.meta as unknown as { env: { BASE_URL: string } }).env.BASE_URL;
+    return base?.replace(/\/+$/, "") || "";
+  } catch {
+    return "";
+  }
 }
 
 export function useAuth(): AuthState {
@@ -21,7 +35,7 @@ export function useAuth(): AuthState {
     fetch("/api/auth/user", { credentials: "include" })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json() as Promise<{ user: AuthUser | null }>;
+        return res.json() as Promise<{ isAuthenticated: boolean; user: AuthUser | null }>;
       })
       .then((data) => {
         if (!cancelled) {
@@ -42,8 +56,8 @@ export function useAuth(): AuthState {
   }, []);
 
   const login = useCallback(() => {
-    const base = import.meta.env.BASE_URL.replace(/\/+$/, "") || "/";
-    window.location.href = `/api/login?returnTo=${encodeURIComponent(base)}`;
+    const base = getBase();
+    window.location.href = `/api/login?returnTo=${encodeURIComponent(base || "/")}`;
   }, []);
 
   const logout = useCallback(() => {

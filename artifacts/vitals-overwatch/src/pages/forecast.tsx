@@ -5,6 +5,7 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Label } from "recharts";
 import { format, addHours } from "date-fns";
+import { formatRelative } from "@/lib/utils";
 
 function DataQualityBadge({ quality }: { quality: string | undefined }) {
   if (!quality) return null;
@@ -52,11 +53,14 @@ export default function ForecastPage() {
   const { data, isLoading, isError } = useGetBiometricForecast(memberId, { horizonHours: horizon });
 
   const chartData = useMemo(() => {
-    if (!data?.forecastPoints) return [];
-    return data.forecastPoints.map(p => ({
+    if (!data?.timeline) return [];
+    return data.timeline.map(p => ({
       ...p,
       timeLabel: format(new Date(p.timestamp), "EEE ha"),
-      isForecast: p.isForecast
+      isForecast: !p.isHistory,
+      hrvBandWidth: p.hrvUpper - p.hrvLower,
+      hrBandWidth: p.hrUpper - p.hrLower,
+      spo2BandWidth: p.spo2Upper - p.spo2Lower,
     }));
   }, [data]);
 
@@ -105,9 +109,9 @@ export default function ForecastPage() {
   }
 
   const metricConfig = {
-    hrv: { label: "HRV (ms)", key: "heartRateVariability", color: "var(--primary)", icon: Activity },
-    rhr: { label: "Resting HR (bpm)", key: "restingHeartRate", color: "var(--destructive)", icon: Heart },
-    spo2: { label: "SpO2 (%)", key: "spo2", color: "var(--accent)", icon: Wind },
+    hrv: { label: "HRV (ms)", key: "hrv", lowerKey: "hrvLower", bandKey: "hrvBandWidth", color: "var(--primary)", icon: Activity },
+    rhr: { label: "Resting HR (bpm)", key: "restingHr", lowerKey: "hrLower", bandKey: "hrBandWidth", color: "var(--destructive)", icon: Heart },
+    spo2: { label: "SpO2 (%)", key: "spo2", lowerKey: "spo2Lower", bandKey: "spo2BandWidth", color: "var(--accent)", icon: Wind },
   };
 
   const activeConf = metricConfig[activeMetric];
@@ -194,24 +198,34 @@ export default function ForecastPage() {
                 </ReferenceLine>
               )}
 
-              {/* Confidence Band (Forecast area) */}
-              <Area 
-                type="monotone" 
-                dataKey={(d) => d.isForecast ? [d.confidenceLower?.[activeConf.key], d.confidenceUpper?.[activeConf.key]] : null} 
-                stroke="none" 
-                fill="url(#forecastBand)" 
+              {/* Confidence Band — stacked areas create lower-to-upper band */}
+              <Area
+                type="monotone"
+                dataKey={activeConf.lowerKey}
+                stroke="none"
+                fill="transparent"
+                stackId="band"
                 connectNulls
+                dot={false}
               />
-              
-              {/* Actual/Forecast Line */}
-              <Line 
-                type="monotone" 
-                dataKey={(d) => d[activeConf.key]} 
-                stroke={`hsl(${activeConf.color})`} 
+              <Area
+                type="monotone"
+                dataKey={activeConf.bandKey}
+                stroke="none"
+                fill="url(#forecastBand)"
+                stackId="band"
+                connectNulls
+                dot={false}
+              />
+
+              {/* History line — solid */}
+              <Line
+                type="monotone"
+                dataKey={activeConf.key}
+                stroke={`hsl(${activeConf.color})`}
                 strokeWidth={3}
                 dot={false}
                 activeDot={{ r: 6, fill: `hsl(${activeConf.color})`, stroke: 'black', strokeWidth: 2 }}
-                strokeDasharray={(d) => d?.isForecast ? "5 5" : "0"}
                 connectNulls
               />
             </ComposedChart>
@@ -267,7 +281,7 @@ export default function ForecastPage() {
                         <div>
                           <h3 className="text-xl font-display font-bold text-foreground">{event.label}</h3>
                           <p className="text-muted-foreground flex items-center gap-1 mt-1">
-                            <Clock className="w-4 h-4" /> Expected onset: {formatRelative(event.expectedOnsetAt)}
+                            <Clock className="w-4 h-4" /> Expected onset: {formatRelative(event.expectedOnset)}
                           </p>
                         </div>
                       </div>

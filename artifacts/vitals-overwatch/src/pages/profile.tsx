@@ -24,9 +24,9 @@ export default function ProfilePage() {
   useEffect(() => {
     if (profile) {
       setFormData({
-        notificationsEnabled: profile.preferences?.notificationsEnabled ?? true,
+        notificationsEnabled: profile.notificationsEnabled ?? true,
         guardianAlertEmail: profile.guardianAlertEmail ?? "",
-        timezone: profile.preferences?.timezone ?? "America/New_York",
+        timezone: profile.timezone ?? "America/New_York",
       });
     }
   }, [profile]);
@@ -35,10 +35,8 @@ export default function ProfilePage() {
     updateProfile.mutate({
       data: {
         guardianAlertEmail: formData.guardianAlertEmail,
-        preferences: {
-          notificationsEnabled: formData.notificationsEnabled,
-          timezone: formData.timezone
-        }
+        notificationsEnabled: formData.notificationsEnabled,
+        timezone: formData.timezone,
       }
     }, {
       onSuccess: () => {
@@ -71,17 +69,17 @@ export default function ProfilePage() {
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px]" />
         
         <Avatar className="w-24 h-24 border-2 border-white/10 shadow-xl shadow-black/50 relative z-10">
-          <AvatarImage src={user?.profileImage} />
+          <AvatarImage src={user?.profileImageUrl ?? undefined} />
           <AvatarFallback className="bg-gradient-to-br from-secondary to-muted text-3xl font-display font-bold">
-            {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+            {user?.firstName ? user.firstName.charAt(0).toUpperCase() : "U"}
           </AvatarFallback>
         </Avatar>
         
         <div className="relative z-10 flex-1">
-          <h1 className="text-3xl font-display font-bold text-foreground">{user?.name || "User Profile"}</h1>
-          <p className="text-muted-foreground text-lg">{profile?.email || user?.name || "user@example.com"}</p>
+          <h1 className="text-3xl font-display font-bold text-foreground">{[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "User Profile"}</h1>
+          <p className="text-muted-foreground text-lg">{profile?.email || user?.email || "user@example.com"}</p>
           <div className="mt-2 text-sm text-muted-foreground/70 bg-white/5 inline-block px-3 py-1 rounded-full border border-white/10">
-            Member since {profile?.createdAt ? format(new Date(profile.createdAt), "MMMM yyyy") : "recently"}
+            Member since {profile?.timezone ? profile.timezone : "recently"}
           </div>
         </div>
 
